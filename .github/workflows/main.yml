@@ -27,10 +27,6 @@ jobs:
             exit 1
           fi
 
-          # Authenticate gh with the provided token so calls to private repos succeed
-          echo "$GH_TOKEN" | gh auth login --with-token
-          gh auth status
-
           # Get the latest release tag (use gh release list which returns empty instead of 404)
           LATEST_PRIVATE_TAG=$(gh release list -R Pratech1015/Aster --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || true)
 
