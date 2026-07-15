@@ -18,32 +18,51 @@ jobs:
 
       - name: Build Aster
         env:
-          GH_TOKEN: ${{ secrets.PAT }}
+          GH_TOKEN: ${{ secrets.PAT }}   # ensure 'PAT' secret exists and has 'repo' scope
         run: |
-          # 1. Get latest tag from private repo
-          LATEST_PRIVATE_TAG=$(gh api repos/Pratech1015/Aster/releases/latest --jq .tag_name)
-          
-          # 2. Check local version.txt
+          set -euo pipefail
+
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "Error: GH_TOKEN (secrets.PAT) is not set. Add a PAT with repo access."
+            exit 1
+          fi
+
+          # Authenticate gh with the provided token so calls to private repos succeed
+          echo "$GH_TOKEN" | gh auth login --with-token
+          gh auth status
+
+          # Get the latest release tag (use gh release list which returns empty instead of 404)
+          LATEST_PRIVATE_TAG=$(gh release list -R Pratech1015/Aster --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || true)
+
+          if [ -z "$LATEST_PRIVATE_TAG" ]; then
+            echo "No releases found in Pratech1015/Aster. Nothing to sync."
+            exit 0
+          fi
+
+          echo "Latest private tag: $LATEST_PRIVATE_TAG"
+
+          # Check local version
           CURRENT_VERSION=$(cat version.txt)
+          echo "Current local version: $CURRENT_VERSION"
 
           if [ "$LATEST_PRIVATE_TAG" != "$CURRENT_VERSION" ]; then
             echo "New version detected: $LATEST_PRIVATE_TAG"
-            
-            # 3. Create release in public repo
+
+            # Create release in this repo (current repo)
             gh release create "$LATEST_PRIVATE_TAG" --notes "Built update $LATEST_PRIVATE_TAG"
-            
-            # 4. Download and attach assets from private repo
+
+            # Download assets from private repo and upload to this repo's release
             gh release download "$LATEST_PRIVATE_TAG" -R Pratech1015/Aster -p "com.aster.regolith.flatpak"
             gh release download "$LATEST_PRIVATE_TAG" -R Pratech1015/Aster -p "Aster.Browser.Windows.Portable.exe"
             gh release upload "$LATEST_PRIVATE_TAG" com.aster.regolith.flatpak
             gh release upload "$LATEST_PRIVATE_TAG" Aster.Browser.Windows.Portable.exe
-            
-            # 5. Update local version file
+
+            # Update version.txt and push
             echo "$LATEST_PRIVATE_TAG" > version.txt
             git config user.name "github-actions"
             git config user.email "github-actions@github.com"
             git add version.txt
-            git commit -m "chore: update version to $LATEST_PRIVATE_TAG"
+            git commit -m "chore: update version to $LATEST_PRIVATE_TAG" || echo "No changes to commit"
             git push
           else
             echo "Versions are in sync."
