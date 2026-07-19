@@ -48,10 +48,10 @@ jobs:
             gh release create "$LATEST_PRIVATE_TAG" --notes "Built update $LATEST_PRIVATE_TAG"
 
             # Download assets from private repo and upload to this repo's release
-            gh release download "$LATEST_PRIVATE_TAG" -R Pratech1015/Aster -p "com.aster.regolith.flatpak"
-            gh release download "$LATEST_PRIVATE_TAG" -R Pratech1015/Aster -p "Aster.Browser.Windows.Portable.exe"
-            gh release upload "$LATEST_PRIVATE_TAG" com.aster.regolith.flatpak
-            gh release upload "$LATEST_PRIVATE_TAG" Aster.Browser.Windows.Portable.exe
+            gh release download "$LATEST_PRIVATE_TAG" -R Pratech1015/Aster -p "io.qzz.prismco.regolith.flatpak"
+            gh release download "$LATEST_PRIVATE_TAG" -R Pratech1015/Aster -p "Aster-Regolith-Setup-0.4.0.exe"
+            gh release upload "$LATEST_PRIVATE_TAG" io.qzz.prismco.regolith.flatpak
+            gh release upload "$LATEST_PRIVATE_TAG" Aster-Regolith-Setup-0.4.0.exe
 
             # Update version.txt and push
             echo "$LATEST_PRIVATE_TAG" > version.txt
