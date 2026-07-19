@@ -1,7 +1,4 @@
 on:
-  schedule:
-    - cron: 30 * * * *
-  # This enables the manual "Run workflow" button in the UI
   workflow_dispatch:
     inputs:
       reason:
